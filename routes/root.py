@@ -1,5 +1,6 @@
 """
 Root routes for the Telegive Auth Service
+Updated to trigger redeploy with SQLAlchemy fix
 """
 from flask import Blueprint, jsonify
 
