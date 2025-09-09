@@ -109,12 +109,23 @@ def login():
         validated_data = InputValidator.validate_login_data(data)
         bot_token = validated_data['bot_token']
         
-        # Encrypt the provided token to match database
-        encrypted_token = TokenEncryption.encrypt_token(bot_token)
+        # Extract bot ID from token to find account
+        try:
+            bot_id = int(bot_token.split(':')[0])
+        except (ValueError, IndexError):
+            raise TokenError("Invalid bot token format", "INVALID_CREDENTIALS")
         
-        # Find account by encrypted token
-        account = Account.query.filter_by(bot_token_encrypted=encrypted_token).first()
+        # Find account by bot_id
+        account = Account.query.filter_by(bot_id=bot_id).first()
         if not account:
+            raise TokenError("Invalid bot token", "INVALID_CREDENTIALS")
+        
+        # Verify the token by decrypting stored token and comparing
+        try:
+            stored_token = TokenEncryption.decrypt_token(account.bot_token_encrypted)
+            if stored_token != bot_token:
+                raise TokenError("Invalid bot token", "INVALID_CREDENTIALS")
+        except Exception:
             raise TokenError("Invalid bot token", "INVALID_CREDENTIALS")
         
         if not account.is_active:
