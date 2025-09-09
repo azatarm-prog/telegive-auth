@@ -1,0 +1,6 @@
+# Development and testing dependencies
+-r requirements.txt
+pytest==7.4.2
+pytest-asyncio==0.21.1
+aiohttp==3.8.5
+

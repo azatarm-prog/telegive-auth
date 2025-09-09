@@ -73,10 +73,10 @@ The following environment variables are required for deployment:
 
 ## Testing
 
-The project includes a comprehensive test suite using `pytest`. To run the tests, first install the dependencies:
+The project includes a comprehensive test suite using `pytest`. To run the tests, first install the development dependencies:
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 ```
 
 Then, run the tests:
@@ -96,5 +96,14 @@ To run load tests, use the `--runload` flag:
 ```bash
 pytest --runload
 ```
+
+## Development Setup
+
+For local development:
+
+1. Clone the repository
+2. Install development dependencies: `pip install -r requirements-dev.txt`
+3. Set up environment variables (copy `.env.example` to `.env`)
+4. Run the application: `python app.py`
 
 

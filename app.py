@@ -37,7 +37,11 @@ def create_app(config_name=None):
     """
     # Determine configuration
     if config_name is None:
-        config_name = os.environ.get('FLASK_ENV', 'development')
+        config_name = os.environ.get('FLASK_ENV', 'production')
+    
+    # Handle case where config_name might not exist in config dict
+    if config_name not in config:
+        config_name = 'production'
     
     # Create Flask app
     app = Flask(__name__)
