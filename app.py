@@ -79,8 +79,8 @@ def init_extensions(app):
     
     # Initialize rate limiter
     limiter = Limiter(
-        app,
         key_func=get_remote_address,
+        app=app,
         storage_uri=app.config.get('RATELIMIT_STORAGE_URL', 'memory://'),
         default_limits=["1000 per hour"]
     )
