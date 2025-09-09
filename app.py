@@ -77,22 +77,23 @@ def init_extensions(app):
          allow_headers=['Content-Type', 'Authorization', 'X-Service-Name'],
          methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
     
-    # Initialize rate limiter
-    limiter = Limiter(
-        key_func=get_remote_address,
-        app=app,
-        storage_uri=app.config.get('RATELIMIT_STORAGE_URL', 'memory://'),
-        default_limits=["1000 per hour"]
-    )
+    # TODO: Add rate limiting back later - temporarily disabled to fix deployment
+    # Initialize rate limiter with proper syntax
+    # limiter = Limiter(
+    #     app=app,
+    #     key_func=get_remote_address,
+    #     storage_uri=app.config.get('RATELIMIT_STORAGE_URL', 'memory://'),
+    #     default_limits=["1000 per hour"]
+    # )
     
-    # Apply rate limits to specific endpoints
-    limiter.limit("5 per minute")(auth_bp, methods=['POST'], endpoint='register')
-    limiter.limit("10 per minute")(auth_bp, methods=['POST'], endpoint='login')
-    limiter.limit("100 per minute")(auth_bp, methods=['GET'], endpoint='verify_session')
-    limiter.limit("50 per minute")(auth_bp, methods=['GET'], endpoint='decrypt_token')
+    # Apply rate limits to specific endpoints - temporarily disabled
+    # limiter.limit("5 per minute")(auth_bp, methods=['POST'], endpoint='register')
+    # limiter.limit("10 per minute")(auth_bp, methods=['POST'], endpoint='login')
+    # limiter.limit("100 per minute")(auth_bp, methods=['GET'], endpoint='verify_session')
+    # limiter.limit("50 per minute")(auth_bp, methods=['GET'], endpoint='decrypt_token')
     
-    # Store limiter in app for access in routes if needed
-    app.limiter = limiter
+    # Store limiter in app for access in routes if needed - temporarily disabled
+    # app.limiter = limiter
 
 def register_blueprints(app):
     """Register Flask blueprints"""
