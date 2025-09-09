@@ -18,8 +18,9 @@ def health_check():
     GET /health
     """
     try:
-        # Check database connectivity
-        db.session.execute('SELECT 1')
+        # Check database connectivity with proper SQLAlchemy syntax
+        from sqlalchemy import text
+        db.session.execute(text('SELECT 1'))
         database_status = "connected"
     except Exception as e:
         logger.error(f"Database health check failed: {str(e)}")
@@ -48,8 +49,9 @@ def detailed_health_check():
     GET /health/detailed
     """
     try:
-        # Check database connectivity and get some stats
-        db.session.execute('SELECT 1')
+        # Check database connectivity and get some stats with proper SQLAlchemy syntax
+        from sqlalchemy import text
+        db.session.execute(text('SELECT 1'))
         database_status = "connected"
         
         # Get account count
