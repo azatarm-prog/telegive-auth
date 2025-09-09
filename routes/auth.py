@@ -170,11 +170,20 @@ def verify_session():
     Verify session validity
     
     GET /api/auth/verify-session
-    Headers: Cookie: session=sess_abc123
+    Headers: 
+        Cookie: session=sess_abc123 OR
+        Authorization: Bearer sess_abc123
     """
     try:
-        # Get session ID from cookie
+        # Get session ID from cookie or Authorization header
         session_id = session.get('session_id')
+        
+        # If not in cookie, check Authorization header
+        if not session_id:
+            auth_header = request.headers.get('Authorization', '')
+            if auth_header.startswith('Bearer '):
+                session_id = auth_header[7:]  # Remove 'Bearer ' prefix
+        
         if not session_id:
             raise SessionError("No session found", "NO_SESSION")
         
