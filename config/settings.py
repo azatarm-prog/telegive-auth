@@ -81,15 +81,29 @@ class ProductionConfig(Config):
         
         # Production-specific initialization
         import logging
-        from logging.handlers import RotatingFileHandler
+        import os
         
         if not app.debug:
-            file_handler = RotatingFileHandler('logs/auth_service.log', maxBytes=10240, backupCount=10)
-            file_handler.setFormatter(logging.Formatter(
-                '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
-            ))
-            file_handler.setLevel(logging.INFO)
-            app.logger.addHandler(file_handler)
+            # Use stdout logging for containerized environments like Railway
+            if os.environ.get('LOG_TO_STDOUT'):
+                stream_handler = logging.StreamHandler()
+                stream_handler.setFormatter(logging.Formatter(
+                    '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+                ))
+                stream_handler.setLevel(logging.INFO)
+                app.logger.addHandler(stream_handler)
+            else:
+                # File logging (create directory if it doesn't exist)
+                if not os.path.exists('logs'):
+                    os.makedirs('logs')
+                from logging.handlers import RotatingFileHandler
+                file_handler = RotatingFileHandler('logs/auth_service.log', maxBytes=10240, backupCount=10)
+                file_handler.setFormatter(logging.Formatter(
+                    '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+                ))
+                file_handler.setLevel(logging.INFO)
+                app.logger.addHandler(file_handler)
+            
             app.logger.setLevel(logging.INFO)
             app.logger.info('Auth service startup')
 
