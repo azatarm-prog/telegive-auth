@@ -107,6 +107,10 @@ def register_blueprints(app):
     
     # Register health check routes (no prefix for /health)
     app.register_blueprint(health_bp)
+    
+    # Register admin routes
+    from routes.admin import admin_bp
+    app.register_blueprint(admin_bp, url_prefix='/admin')
 
 def setup_logging(app):
     """Set up application logging"""
