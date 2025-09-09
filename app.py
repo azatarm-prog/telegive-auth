@@ -97,6 +97,10 @@ def init_extensions(app):
 def register_blueprints(app):
     """Register Flask blueprints"""
     
+    # Register root routes
+    from routes.root import root_bp
+    app.register_blueprint(root_bp)
+    
     # Register authentication routes
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     
@@ -175,81 +179,6 @@ def register_error_handlers(app):
 
 # Create the application instance
 app = create_app()
-
-# Create database tables on first run
-with app.app_context():
-    try:
-        db.create_all()
-        app.logger.info("Database tables created successfully")
-    except Exception as e:
-        app.logger.error(f"Failed to create database tables: {str(e)}")
-
-# Add some utility routes
-@app.route('/')
-def index():
-    """Root endpoint with service information"""
-    return jsonify({
-        'service': 'Telegive Authentication Service',
-        'version': '1.0.0',
-        'status': 'running',
-        'endpoints': {
-            'health': '/health',
-            'auth': '/api/auth/*'
-        }
-    })
-
-@app.route('/api')
-def api_info():
-    """API information endpoint"""
-    return jsonify({
-        'service': 'Telegive Authentication Service API',
-        'version': '1.0.0',
-        'endpoints': {
-            'register': 'POST /api/auth/register',
-            'login': 'POST /api/auth/login',
-            'verify_session': 'GET /api/auth/verify-session',
-            'get_account': 'GET /api/auth/account/{account_id}',
-            'decrypt_token': 'GET /api/auth/decrypt-token/{account_id}',
-            'logout': 'POST /api/auth/logout'
-        }
-    })
-
-# Request logging middleware
-@app.before_request
-def log_request_info():
-    """Log request information for debugging"""
-    if not app.debug:
-        return
-    
-    app.logger.debug(f"Request: {request.method} {request.url}")
-    if request.get_json():
-        # Don't log sensitive data like tokens
-        data = request.get_json()
-        if 'bot_token' in data:
-            data = {**data, 'bot_token': '[REDACTED]'}
-        app.logger.debug(f"Request data: {data}")
-
-# Response logging middleware
-@app.after_request
-def log_response_info(response):
-    """Log response information for debugging"""
-    if not app.debug:
-        return response
-    
-    app.logger.debug(f"Response: {response.status_code}")
-    return response
-
-# Session cleanup task (could be run periodically)
-def cleanup_expired_sessions():
-    """Clean up expired sessions from database"""
-    with app.app_context():
-        try:
-            count = AuthSession.cleanup_expired_sessions()
-            app.logger.info(f"Cleaned up {count} expired sessions")
-            return count
-        except Exception as e:
-            app.logger.error(f"Failed to cleanup expired sessions: {str(e)}")
-            return 0
 
 if __name__ == '__main__':
     # Development server
