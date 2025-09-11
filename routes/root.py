@@ -15,7 +15,8 @@ def index():
         'status': 'running',
         'endpoints': {
             'health': '/health',
-            'auth': '/api/auth/*'
+            'auth': '/api/auth/*',
+            'bots_v1': '/api/v1/bots/*'
         }
     })
 
@@ -26,6 +27,9 @@ def api_info():
         'service': 'Telegive Authentication Service API',
         'version': '1.0.0',
         'endpoints': {
+            'bot_register': 'POST /api/v1/bots/register',
+            'bot_validate': 'GET /api/v1/bots/validate/{bot_id}',
+            'bot_token': 'GET /api/v1/bots/token/{bot_id}',
             'register': 'POST /api/auth/register',
             'login': 'POST /api/auth/login',
             'verify_session': 'GET /api/auth/verify-session',
