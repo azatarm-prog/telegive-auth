@@ -38,47 +38,67 @@ def register_bot():
         return '', 200
     
     try:
+        logger.info("Bot registration request received")
+        
         # Validate request data
         data = request.get_json()
         if not data:
-            raise ValidationError("Request body must be JSON")
+            logger.warning("Request body is not JSON")
+            return jsonify({'error': 'Request body must be JSON'}), 400
         
-        validated_data = InputValidator.validate_registration_data(data)
-        bot_token = validated_data['bot_token']
+        bot_token = data.get('bot_token')
+        if not bot_token:
+            logger.warning("Bot token missing from request")
+            return jsonify({'error': 'Bot token is required'}), 400
         
-        # Validate token with Telegram API
-        telegram_api = TelegramAPI()
-        validation_result = telegram_api.validate_bot_token(bot_token)
+        # Basic token format validation
+        if not isinstance(bot_token, str) or ':' not in bot_token:
+            logger.warning(f"Invalid bot token format: {bot_token[:10]}...")
+            return jsonify({'error': 'Invalid bot token format'}), 400
         
-        if not validation_result['success']:
-            raise TokenError(
-                validation_result['error'], 
-                validation_result['error_code']
-            )
+        try:
+            bot_id_str = bot_token.split(':')[0]
+            if not bot_id_str.isdigit():
+                logger.warning("Bot ID is not numeric")
+                return jsonify({'error': 'Invalid bot token format'}), 400
+            bot_id = int(bot_id_str)
+        except (ValueError, IndexError) as e:
+            logger.warning(f"Failed to extract bot ID: {str(e)}")
+            return jsonify({'error': 'Invalid bot token format'}), 400
         
-        bot_info = validation_result['bot_info']
-        bot_id = bot_info['id']
+        logger.info(f"Processing bot registration for bot_id: {bot_id}")
         
-        # Check if account already exists
-        existing_account = Account.query.filter_by(bot_id=bot_id).first()
+        # Check if account already exists first (before Telegram API call)
+        try:
+            existing_account = Account.query.filter_by(bot_id=bot_id).first()
+        except Exception as e:
+            logger.error(f"Database query failed: {str(e)}")
+            return jsonify({'error': 'Database error'}), 500
         
         if existing_account:
+            logger.info(f"Found existing account for bot_id: {bot_id}")
             # Existing bot - validate token and return success
             try:
                 stored_token = TokenEncryption.decrypt_token(existing_account.bot_token_encrypted)
                 if stored_token != bot_token:
-                    raise TokenError("Invalid bot token", "INVALID_TOKEN")
-            except Exception:
-                raise TokenError("Invalid bot token", "INVALID_TOKEN")
+                    logger.warning(f"Token mismatch for bot_id: {bot_id}")
+                    return jsonify({'error': 'Invalid bot token'}), 400
+            except Exception as e:
+                logger.error(f"Token decryption failed for bot_id {bot_id}: {str(e)}")
+                return jsonify({'error': 'Invalid bot token'}), 400
             
             if not existing_account.is_active:
-                raise AccountError("Account is deactivated", "ACCOUNT_DEACTIVATED")
+                logger.warning(f"Account deactivated for bot_id: {bot_id}")
+                return jsonify({'error': 'Account is deactivated'}), 403
             
             # Update last login
-            existing_account.update_last_login()
-            db.session.commit()
-            
-            logger.info(f"Existing bot authenticated: bot_id={bot_id}, username={existing_account.bot_username}")
+            try:
+                existing_account.update_last_login()
+                db.session.commit()
+                logger.info(f"Updated last login for bot_id: {bot_id}")
+            except Exception as e:
+                logger.error(f"Failed to update last login: {str(e)}")
+                # Don't fail the request for this
             
             return jsonify({
                 'message': 'Bot registered successfully',
@@ -87,33 +107,59 @@ def register_bot():
             }), 200
         
         else:
-            # New bot - create account
-            encrypted_token = TokenEncryption.encrypt_token(bot_token)
+            logger.info(f"New bot registration for bot_id: {bot_id}")
+            # New bot - validate with Telegram API
+            try:
+                telegram_api = TelegramAPI()
+                validation_result = telegram_api.validate_bot_token(bot_token)
+                
+                if not validation_result['success']:
+                    logger.warning(f"Telegram API validation failed: {validation_result.get('error')}")
+                    return jsonify({'error': validation_result.get('error', 'Bot token validation failed')}), 400
+                
+                bot_info = validation_result['bot_info']
+                logger.info(f"Telegram API validation successful for bot: {bot_info.get('username', 'unknown')}")
+                
+            except Exception as e:
+                logger.error(f"Telegram API validation error: {str(e)}")
+                return jsonify({'error': 'Failed to validate bot token with Telegram'}), 500
             
-            account = Account(
-                bot_token_encrypted=encrypted_token,
-                bot_id=bot_id,
-                bot_username=bot_info.get('username', ''),
-                bot_name=bot_info.get('first_name', 'Unknown Bot')
-            )
-            
-            db.session.add(account)
-            db.session.commit()
-            
-            logger.info(f"New bot registered: bot_id={bot_id}, username={account.bot_username}")
-            
-            return jsonify({
-                'message': 'Bot registered successfully',
-                'bot_id': str(bot_id),
-                'access_token': f"auth_{account.id}_{bot_id}"
-            }), 200
+            # Create new account
+            try:
+                encrypted_token = TokenEncryption.encrypt_token(bot_token)
+                
+                account = Account(
+                    bot_token_encrypted=encrypted_token,
+                    bot_id=bot_id,
+                    bot_username=bot_info.get('username', ''),
+                    bot_name=bot_info.get('first_name', 'Unknown Bot')
+                )
+                
+                db.session.add(account)
+                db.session.commit()
+                
+                logger.info(f"New account created for bot_id: {bot_id}, username: {account.bot_username}")
+                
+                return jsonify({
+                    'message': 'Bot registered successfully',
+                    'bot_id': str(bot_id),
+                    'access_token': f"auth_{account.id}_{bot_id}"
+                }), 200
+                
+            except Exception as e:
+                logger.error(f"Failed to create account: {str(e)}")
+                try:
+                    db.session.rollback()
+                except:
+                    pass
+                return jsonify({'error': 'Failed to create account'}), 500
         
-    except AuthError as e:
-        logger.warning(f"Bot registration failed: {e.message}")
-        return jsonify({'error': e.message}), e.status_code
-    
     except Exception as e:
         logger.error(f"Unexpected error during bot registration: {str(e)}", exc_info=True)
+        try:
+            db.session.rollback()
+        except:
+            pass
         return jsonify({'error': 'Internal server error'}), 500
 
 @bots_bp.route('/validate/<int:bot_id>', methods=['GET'])
