@@ -74,8 +74,9 @@ def init_extensions(app):
     CORS(app, 
          origins=app.config.get('CORS_ORIGINS', ['*']),
          supports_credentials=True,
-         allow_headers=['Content-Type', 'Authorization', 'X-Service-Name'],
-         methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
+         allow_headers=['Content-Type', 'Authorization', 'X-Service-Name', 'X-Requested-With'],
+         methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+         expose_headers=['Content-Type', 'Authorization'])
     
     # TODO: Add rate limiting back later - temporarily disabled to fix deployment
     # Initialize rate limiter with proper syntax

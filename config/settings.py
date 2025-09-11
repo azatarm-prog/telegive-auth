@@ -38,7 +38,14 @@ class Config:
     RATELIMIT_STORAGE_URL = os.environ.get('REDIS_URL', 'memory://')
     
     # CORS configuration
-    CORS_ORIGINS = ['*']  # Allow all origins for development
+    CORS_ORIGINS = [
+        'https://telegive-dashboard.vercel.app',
+        'https://telegive-frontend.vercel.app',
+        'https://telegive-dashboard-production.up.railway.app',
+        'http://localhost:3000',
+        'http://localhost:5173',
+        'http://localhost:8080'
+    ]
     
     @staticmethod
     def init_app(app):
