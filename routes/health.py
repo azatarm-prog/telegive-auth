@@ -94,3 +94,51 @@ def detailed_health_check():
     
     return jsonify(response), status_code
 
+@health_bp.route('/health/live', methods=['GET'])
+def liveness_check():
+    """
+    Liveness probe endpoint for Kubernetes/container orchestration
+    
+    GET /health/live
+    """
+    # Simple liveness check - just return that the service is alive
+    response = {
+        "status": "alive",
+        "service": "auth-service",
+        "timestamp": datetime.utcnow().isoformat() + "Z"
+    }
+    
+    return jsonify(response), 200
+
+@health_bp.route('/health/ready', methods=['GET'])
+def readiness_check():
+    """
+    Readiness probe endpoint for Kubernetes/container orchestration
+    
+    GET /health/ready
+    """
+    try:
+        # Check if service is ready to accept requests
+        # This includes database connectivity check
+        from sqlalchemy import text
+        db.session.execute(text('SELECT 1'))
+        database_status = "connected"
+        ready = True
+    except Exception as e:
+        logger.error(f"Readiness check failed: {str(e)}")
+        database_status = "disconnected"
+        ready = False
+    
+    status = "ready" if ready else "not_ready"
+    
+    response = {
+        "status": status,
+        "service": "auth-service",
+        "database": database_status,
+        "timestamp": datetime.utcnow().isoformat() + "Z"
+    }
+    
+    status_code = 200 if ready else 503
+    
+    return jsonify(response), status_code
+
