@@ -52,8 +52,8 @@ def get_account_by_id(account_id):
                 'name': account.bot_name,
                 'is_active': account.is_active,
                 'created_at': account.created_at.isoformat() if account.created_at else None,
-                'updated_at': account.updated_at.isoformat() if account.updated_at else None,
-                'last_login': account.last_login.isoformat() if account.last_login else None
+                'last_login': account.last_login_at.isoformat() if account.last_login_at else None,
+                'last_bot_check': account.last_bot_check_at.isoformat() if account.last_bot_check_at else None
             }
         }), 200
         
@@ -106,7 +106,7 @@ def validate_account(account_id):
                 'username': account.bot_username,
                 'name': account.bot_name,
                 'created_at': account.created_at.isoformat() if account.created_at else None,
-                'updated_at': account.updated_at.isoformat() if account.updated_at else None
+                'last_login': account.last_login_at.isoformat() if account.last_login_at else None
             }
         }), 200
         
@@ -161,9 +161,8 @@ def get_account_info(account_id):
                 'name': account.bot_name,
                 'is_active': account.is_active,
                 'created_at': account.created_at.isoformat() if account.created_at else None,
-                'updated_at': account.updated_at.isoformat() if account.updated_at else None,
-                'last_login': account.last_login.isoformat() if account.last_login else None,
-                'last_bot_check': account.last_bot_check.isoformat() if account.last_bot_check else None,
+                'last_login': account.last_login_at.isoformat() if account.last_login_at else None,
+                'last_bot_check': account.last_bot_check_at.isoformat() if account.last_bot_check_at else None,
                 'active_sessions': active_sessions
             }
         }), 200
@@ -198,7 +197,7 @@ def list_accounts():
                     'name': account.bot_name,
                     'is_active': account.is_active,
                     'created_at': account.created_at.isoformat() if account.created_at else None,
-                    'last_login': account.last_login.isoformat() if account.last_login else None
+                    'last_login': account.last_login_at.isoformat() if account.last_login_at else None
                 })
             except Exception as account_error:
                 logger.warning(f"Error processing account {account.id}: {str(account_error)}")
