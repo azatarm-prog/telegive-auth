@@ -122,6 +122,10 @@ def register_blueprints(app):
     from routes.debug_account import debug_account_bp
     app.register_blueprint(debug_account_bp, url_prefix='/api')
     
+    # Register SQL debug routes for Channel Service coordination
+    from routes.sql_debug import sql_debug_bp
+    app.register_blueprint(sql_debug_bp, url_prefix='/api')
+    
     # Register health check routes (no prefix for /health)
     app.register_blueprint(health_bp)
     
