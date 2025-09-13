@@ -109,3 +109,4 @@ For local development:
 
 # Updated Thu Sep 11 07:41:20 EDT 2025
 # Trigger redeploy Sat Sep 13 09:58:35 EDT 2025
+# Debug endpoints Sat Sep 13 15:05:11 EDT 2025
