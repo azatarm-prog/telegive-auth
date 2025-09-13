@@ -84,4 +84,22 @@ class Account(db.Model):
         """Update the last bot check timestamp"""
         self.last_bot_check_at = datetime.now(timezone.utc)
         db.session.commit()
+    
+    @property
+    def bot_token(self):
+        """
+        Decrypt and return the bot token for service integration
+        This property allows Channel Service to access the decrypted token
+        """
+        if self.bot_token_encrypted:
+            try:
+                from utils.encryption import decrypt_token
+                return decrypt_token(self.bot_token_encrypted)
+            except Exception as e:
+                # Log the error but don't expose it
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Error decrypting bot token for account {self.id}: {str(e)}")
+                return None
+        return None
 
