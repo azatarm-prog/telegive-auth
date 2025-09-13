@@ -118,6 +118,10 @@ def register_blueprints(app):
     from routes.database_info import database_info_bp
     app.register_blueprint(database_info_bp, url_prefix='/api')
     
+    # Register debug routes for troubleshooting
+    from routes.debug_account import debug_account_bp
+    app.register_blueprint(debug_account_bp, url_prefix='/api')
+    
     # Register health check routes (no prefix for /health)
     app.register_blueprint(health_bp)
     
