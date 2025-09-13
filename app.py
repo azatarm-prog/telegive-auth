@@ -126,10 +126,6 @@ def register_blueprints(app):
     from routes.sql_debug import sql_debug_bp
     app.register_blueprint(sql_debug_bp, url_prefix='/api')
     
-    # Register token debug routes for token verification and fixing
-    from routes.token_debug import token_debug_bp
-    app.register_blueprint(token_debug_bp, url_prefix='/api')
-    
     # Register health check routes (no prefix for /health)
     app.register_blueprint(health_bp)
     
