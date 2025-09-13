@@ -16,7 +16,8 @@ def index():
         'endpoints': {
             'health': '/health',
             'auth': '/api/auth/*',
-            'bots_v1': '/api/v1/bots/*'
+            'bots_v1': '/api/v1/bots/*',
+            'accounts': '/api/accounts/*'
         }
     })
 
@@ -30,6 +31,10 @@ def api_info():
             'bot_register': 'POST /api/v1/bots/register',
             'bot_validate': 'GET /api/v1/bots/validate/{bot_id}',
             'bot_token': 'GET /api/v1/bots/token/{bot_id}',
+            'account_get': 'GET /api/accounts/{account_id}',
+            'account_validate': 'GET /api/accounts/{account_id}/validate',
+            'account_info': 'GET /api/accounts/{account_id}/info',
+            'account_list': 'GET /api/accounts/list',
             'register': 'POST /api/auth/register',
             'login': 'POST /api/auth/login',
             'verify_session': 'GET /api/auth/verify-session',

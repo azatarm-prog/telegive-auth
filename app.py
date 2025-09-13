@@ -110,6 +110,10 @@ def register_blueprints(app):
     from routes.bots import bots_bp
     app.register_blueprint(bots_bp, url_prefix='/api/v1/bots')
     
+    # Register accounts routes for service integration
+    from routes.accounts import accounts_bp
+    app.register_blueprint(accounts_bp, url_prefix='/api/accounts')
+    
     # Register health check routes (no prefix for /health)
     app.register_blueprint(health_bp)
     
