@@ -6,12 +6,8 @@ from flask import Blueprint, request, jsonify
 from datetime import datetime, timezone
 import logging
 
+# Import models directly
 from src.models import db, Account, AuthSession
-from utils.validation import InputValidator
-from utils.errors import (
-    AuthError, ValidationError, AccountError, 
-    handle_error, create_success_response
-)
 
 accounts_bp = Blueprint('accounts', __name__)
 logger = logging.getLogger(__name__)
@@ -65,7 +61,8 @@ def get_account_by_id(account_id):
         logger.error(f"Error retrieving account {account_id}: {str(e)}", exc_info=True)
         return jsonify({
             'success': False,
-            'error': 'Internal server error'
+            'error': 'Internal server error',
+            'details': str(e)
         }), 500
 
 @accounts_bp.route('/<int:account_id>/validate', methods=['GET'])
@@ -118,7 +115,8 @@ def validate_account(account_id):
         return jsonify({
             'success': False,
             'valid': False,
-            'error': 'Database error'
+            'error': 'Database error',
+            'details': str(e)
         }), 500
 
 @accounts_bp.route('/<int:account_id>/info', methods=['GET'])
@@ -143,10 +141,14 @@ def get_account_info(account_id):
             }), 404
         
         # Get active sessions count
-        active_sessions = AuthSession.query.filter_by(
-            account_id=account.id,
-            is_active=True
-        ).count()
+        try:
+            active_sessions = AuthSession.query.filter_by(
+                account_id=account.id,
+                is_active=True
+            ).count()
+        except Exception as session_error:
+            logger.warning(f"Could not get session count: {str(session_error)}")
+            active_sessions = 0
         
         logger.info(f"Account info retrieved for ID: {account_id}")
         
@@ -170,7 +172,8 @@ def get_account_info(account_id):
         logger.error(f"Error getting account info {account_id}: {str(e)}", exc_info=True)
         return jsonify({
             'success': False,
-            'error': 'Internal server error'
+            'error': 'Internal server error',
+            'details': str(e)
         }), 500
 
 @accounts_bp.route('/list', methods=['GET'])
@@ -188,14 +191,18 @@ def list_accounts():
         
         account_list = []
         for account in accounts:
-            account_list.append({
-                'id': account.bot_id,
-                'username': account.bot_username,
-                'name': account.bot_name,
-                'is_active': account.is_active,
-                'created_at': account.created_at.isoformat() if account.created_at else None,
-                'last_login': account.last_login.isoformat() if account.last_login else None
-            })
+            try:
+                account_list.append({
+                    'id': account.bot_id,
+                    'username': account.bot_username,
+                    'name': account.bot_name,
+                    'is_active': account.is_active,
+                    'created_at': account.created_at.isoformat() if account.created_at else None,
+                    'last_login': account.last_login.isoformat() if account.last_login else None
+                })
+            except Exception as account_error:
+                logger.warning(f"Error processing account {account.id}: {str(account_error)}")
+                continue
         
         logger.info(f"Account list retrieved: {len(account_list)} accounts")
         
@@ -209,7 +216,8 @@ def list_accounts():
         logger.error(f"Error listing accounts: {str(e)}", exc_info=True)
         return jsonify({
             'success': False,
-            'error': 'Internal server error'
+            'error': 'Internal server error',
+            'details': str(e)
         }), 500
 
 # Error handlers for the blueprint
