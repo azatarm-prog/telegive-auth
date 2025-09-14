@@ -11,6 +11,7 @@ from src.models import db, Account, AuthSession
 from utils.encryption import TokenEncryption
 from utils.telegram_api import TelegramAPI
 from utils.validation import InputValidator
+from utils.bot_service_notifier import bot_service_notifier
 from utils.errors import (
     AuthError, ValidationError, TokenError, SessionError, 
     AccountError, handle_error, create_success_response
@@ -100,6 +101,18 @@ def register_bot():
                 logger.error(f"Failed to update last login: {str(e)}")
                 # Don't fail the request for this
             
+            # Notify Bot Service of token availability (push notification)
+            try:
+                bot_service_notifier.notify_token_update(
+                    bot_token=bot_token,
+                    bot_username=existing_account.bot_username,
+                    bot_id=bot_id
+                )
+                logger.info(f"Bot Service notified of token for bot_id: {bot_id}")
+            except Exception as e:
+                logger.warning(f"Failed to notify Bot Service: {str(e)}")
+                # Don't fail the request for notification failures
+            
             return jsonify({
                 'message': 'Bot registered successfully',
                 'bot_id': str(bot_id),
@@ -139,6 +152,18 @@ def register_bot():
                 db.session.commit()
                 
                 logger.info(f"New account created for bot_id: {bot_id}, username: {account.bot_username}")
+                
+                # Notify Bot Service of new token (push notification)
+                try:
+                    bot_service_notifier.notify_token_update(
+                        bot_token=bot_token,
+                        bot_username=account.bot_username,
+                        bot_id=bot_id
+                    )
+                    logger.info(f"Bot Service notified of new token for bot_id: {bot_id}")
+                except Exception as e:
+                    logger.warning(f"Failed to notify Bot Service of new token: {str(e)}")
+                    # Don't fail the request for notification failures
                 
                 return jsonify({
                     'message': 'Bot registered successfully',
