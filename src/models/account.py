@@ -93,8 +93,8 @@ class Account(db.Model):
         """
         if self.bot_token_encrypted:
             try:
-                from utils.encryption import decrypt_token
-                return decrypt_token(self.bot_token_encrypted)
+                from utils.encryption import TokenEncryption
+                return TokenEncryption.decrypt_token(self.bot_token_encrypted)
             except Exception as e:
                 # Log the error but don't expose it
                 import logging
