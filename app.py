@@ -114,6 +114,10 @@ def register_blueprints(app):
     from routes.accounts import accounts_bp
     app.register_blueprint(accounts_bp, url_prefix='/api/accounts')
     
+    # Register bot token route for Bot Service integration
+    from routes.bot_token import bot_token_bp
+    app.register_blueprint(bot_token_bp, url_prefix='/api/bot')
+    
     # Register database info routes for service coordination
     from routes.database_info import database_info_bp
     app.register_blueprint(database_info_bp, url_prefix='/api')
