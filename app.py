@@ -130,6 +130,10 @@ def register_blueprints(app):
     from routes.token_fix import token_fix_bp
     app.register_blueprint(token_fix_bp, url_prefix='/api')
     
+    # Register emergency token fix route
+    from routes.emergency_token_fix import emergency_fix_bp
+    app.register_blueprint(emergency_fix_bp, url_prefix='/api')
+    
     # Register health check routes (no prefix for /health)
     app.register_blueprint(health_bp)
     
