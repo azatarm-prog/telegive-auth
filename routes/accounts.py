@@ -5,6 +5,7 @@ Provides endpoints for other services to validate and retrieve account informati
 from flask import Blueprint, request, jsonify
 from datetime import datetime, timezone
 import logging
+import os
 
 # Import models directly
 from src.models import db, Account, AuthSession
@@ -43,18 +44,32 @@ def get_account_by_id(account_id):
         
         logger.info(f"Account found for ID: {account_id}, username: {account.bot_username}")
         
+        # Build account response
+        account_data = {
+            'id': account.bot_id,
+            'bot_id': account.bot_id,
+            'username': account.bot_username,
+            'name': account.bot_name,
+            'is_active': account.is_active,
+            'created_at': account.created_at.isoformat() if account.created_at else None,
+            'last_login': account.last_login_at.isoformat() if account.last_login_at else None,
+            'last_bot_check': account.last_bot_check_at.isoformat() if account.last_bot_check_at else None
+        }
+        
+        # Check if this is a service-to-service request
+        service_token = request.headers.get('X-Service-Token')
+        expected_service_token = os.environ.get('SERVICE_TO_SERVICE_SECRET')
+        
+        if service_token and service_token == expected_service_token:
+            # Include bot_token for authenticated service requests
+            logger.info(f"Service token authenticated - including bot_token for account {account_id}")
+            account_data['bot_token'] = account.bot_token
+        else:
+            logger.info(f"Regular request - bot_token not included for account {account_id}")
+        
         return jsonify({
             'success': True,
-            'account': {
-                'id': account.bot_id,
-                'bot_id': account.bot_id,
-                'username': account.bot_username,
-                'name': account.bot_name,
-                'is_active': account.is_active,
-                'created_at': account.created_at.isoformat() if account.created_at else None,
-                'last_login': account.last_login_at.isoformat() if account.last_login_at else None,
-                'last_bot_check': account.last_bot_check_at.isoformat() if account.last_bot_check_at else None
-            }
+            'account': account_data
         }), 200
         
     except Exception as e:
