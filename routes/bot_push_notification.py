@@ -75,20 +75,23 @@ def test_push_notification():
         
         # Send push notification
         logger.info(f"Sending push notification for bot_id {bot_id}")
-        notification_sent = bot_service_notifier.notify_token_update(
+        result = bot_service_notifier.notify_token_update(
             bot_token=bot_token,
             bot_username=account.bot_username,
-            bot_id=bot_id
+            bot_id=bot_id,
+            status='active'
         )
         
-        if notification_sent:
+        if result['success']:
             return jsonify({
                 'success': True,
                 'message': f'Push notification sent successfully for bot_id {bot_id}',
                 'bot_id': bot_id,
                 'bot_username': account.bot_username,
                 'connection_test': True,
-                'notification_sent': True
+                'notification_sent': True,
+                'bot_initialized': result.get('bot_initialized', False),
+                'response_data': result.get('data', {})
             }), 200
         else:
             return jsonify({
@@ -96,7 +99,9 @@ def test_push_notification():
                 'message': f'Push notification failed for bot_id {bot_id}',
                 'bot_id': bot_id,
                 'connection_test': True,
-                'notification_sent': False
+                'notification_sent': False,
+                'error': result.get('error'),
+                'attempts': result.get('attempts', 1)
             }), 500
         
     except Exception as e:
@@ -131,14 +136,16 @@ def test_bot_service_connection():
             }), 401
         
         # Test connection
-        connection_ok = bot_service_notifier.test_connection()
+        result = bot_service_notifier.test_connection()
         
         return jsonify({
-            'success': connection_ok,
-            'message': 'Bot Service is reachable' if connection_ok else 'Bot Service is not reachable',
-            'bot_service_url': bot_service_notifier.bot_service_url,
-            'connection_ok': connection_ok
-        }), 200 if connection_ok else 503
+            'success': result['success'],
+            'message': result['message'],
+            'bot_service_url': result['bot_service_url'],
+            'connection_ok': result['success'],
+            'status_data': result.get('status', {}),
+            'error': result.get('error')
+        }), 200 if result['success'] else 503
         
     except Exception as e:
         logger.error(f"Connection test error: {str(e)}", exc_info=True)

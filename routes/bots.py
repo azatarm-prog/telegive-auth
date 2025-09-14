@@ -103,12 +103,17 @@ def register_bot():
             
             # Notify Bot Service of token availability (push notification)
             try:
-                bot_service_notifier.notify_token_update(
+                result = bot_service_notifier.notify_token_update(
                     bot_token=bot_token,
                     bot_username=existing_account.bot_username,
-                    bot_id=bot_id
+                    bot_id=bot_id,
+                    status='active'
                 )
-                logger.info(f"Bot Service notified of token for bot_id: {bot_id}")
+                if result['success']:
+                    logger.info(f"✅ Bot Service notified successfully for bot_id: {bot_id}")
+                    logger.info(f"   Bot initialized: {result.get('bot_initialized', False)}")
+                else:
+                    logger.warning(f"⚠️ Bot Service notification failed: {result.get('error')}")
             except Exception as e:
                 logger.warning(f"Failed to notify Bot Service: {str(e)}")
                 # Don't fail the request for notification failures
@@ -155,12 +160,17 @@ def register_bot():
                 
                 # Notify Bot Service of new token (push notification)
                 try:
-                    bot_service_notifier.notify_token_update(
+                    result = bot_service_notifier.notify_token_update(
                         bot_token=bot_token,
                         bot_username=account.bot_username,
-                        bot_id=bot_id
+                        bot_id=bot_id,
+                        status='active'
                     )
-                    logger.info(f"Bot Service notified of new token for bot_id: {bot_id}")
+                    if result['success']:
+                        logger.info(f"✅ Bot Service notified successfully for new bot_id: {bot_id}")
+                        logger.info(f"   Bot initialized: {result.get('bot_initialized', False)}")
+                    else:
+                        logger.warning(f"⚠️ Bot Service notification failed: {result.get('error')}")
                 except Exception as e:
                     logger.warning(f"Failed to notify Bot Service of new token: {str(e)}")
                     # Don't fail the request for notification failures
